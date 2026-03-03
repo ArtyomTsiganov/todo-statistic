@@ -69,9 +69,9 @@ function printTodos(todos) {
     const limitDate = 10;
     const limitComment = 50;
 
-    let maxUsernameLen = 0; 
-    let maxDateLen = 0;
-    let maxCommentLen = 0;
+    let maxUsernameLen = 4; 
+    let maxDateLen = 4;
+    let maxCommentLen = 7;
     for (const todo of todos) {
         maxUsernameLen = Math.max(maxUsernameLen, todo.username ? todo.username.length : 0);
         maxDateLen = Math.max(maxDateLen, todo.date ? todo.date.length : 0);
@@ -81,16 +81,16 @@ function printTodos(todos) {
     const adjustedLimitDate = Math.min(maxDateLen, limitDate);
     const adjustedLimitComment = Math.min(maxCommentLen, limitComment);
 
-    console.log(`${'!'.padEnd(1, ' ')}  |  ${'user'.padEnd(adjustedLimitUsername, ' ')}  |  ${'date'.padEnd(adjustedLimitDate, ' ')}  |  ${'comment'.padEnd(adjustedLimitComment, ' ')}\n`);
-    console.log(`${'-'.padEnd(1, '-')}--|--${'-'.padEnd(adjustedLimitUsername, '-')}--|--${'-'.padEnd(adjustedLimitDate, '-')}--|--${'-'.padEnd(adjustedLimitComment, '-')}--\n`);
+    console.log(`${'!'.padEnd(1, ' ')}  |  ${'user'.padEnd(adjustedLimitUsername, ' ')}  |  ${'date'.padEnd(adjustedLimitDate, ' ')}  |  ${'comment'.padEnd(adjustedLimitComment, ' ')}`);
+    console.log(`${'-'.padEnd(1, '-')}--|--${'-'.padEnd(adjustedLimitUsername, '-')}--|--${'-'.padEnd(adjustedLimitDate, '-')}--|--${'-'.padEnd(adjustedLimitComment, '-')}--`);
     for (const todo of todos) {
         const v1 = todo.isImportant ? '!' : ' ';
         const v2 = todo.username ? cutLen(todo.username, adjustedLimitUsername) : ' '.padEnd(adjustedLimitUsername, ' ');
         const v3 = todo.date ? cutLen(todo.date, adjustedLimitDate) : ' '.padEnd(adjustedLimitDate, ' ');
         const v4 = todo.comment ? cutLen(todo.comment, adjustedLimitComment) : ' '.padEnd(adjustedLimitComment, ' ');
-        console.log(`${v1}  |  ${v2}  |  ${v3}  |  ${v4}\n`);
+        console.log(`${v1}  |  ${v2}  |  ${v3}  |  ${v4}`);
     }
-    console.log(`${'-'.padEnd(1, '-')}--|--${'-'.padEnd(adjustedLimitUsername, '-')}--|--${'-'.padEnd(adjustedLimitDate, '-')}--|--${'-'.padEnd(adjustedLimitComment, '-')}--\n`);
+    console.log(`${'-'.padEnd(1, '-')}--|--${'-'.padEnd(adjustedLimitUsername, '-')}--|--${'-'.padEnd(adjustedLimitDate, '-')}--|--${'-'.padEnd(adjustedLimitComment, '-')}--`);
    
 
 }
