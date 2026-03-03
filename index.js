@@ -1,4 +1,3 @@
-
 const {getAllFilePathsWithExtension, readFile} = require('./fileSystem');
 const {readLine} = require('./console');
 
@@ -16,17 +15,24 @@ class Todo {
     isImportant = false;
     username = null;
     date = null;
+    comment = null;
     line = null;
 
     constructor(line) {
         this.line = line.trim();
-
-        const matchUsername = line.match(new RegExp(`// TODO (.+);\s*(.+);(.+)`, 'i'));
+        
+        const matchUsername = line.match(new RegExp(`//[ ]?TODO[: ]?(.+);\s*(.+);(.+)`, 'i'));
         if (matchUsername) {
             this.username = matchUsername[1].trim();
             this.date = matchUsername[2].trim();
+            this.comment = matchUsername[3].trim();
+        } else {
+            const matchComment = line.match(new RegExp(`//[ ]?TODO[: ]?(.+)`, 'i'));
+            if (matchComment) {
+                this.comment = matchComment[1].trim();
+            }
         }
-        const matchImportant = line.match(new RegExp(`// TODO .*!.*`, 'i'));
+        const matchImportant = line.match(new RegExp(`//[ ]?TODO[: ]?.*!.*`, 'i'));
         if (matchImportant) {
             this.isImportant = true;
         }
@@ -40,7 +46,7 @@ function findAllTodos(files) {
         const lines = file.split('\r\n');
         for (const line of lines) {
 
-            const match = line.match(/\/\/\s*TODO.*$/);
+            const match = line.match(new RegExp(`//[ ]?TODO[: ]?(.*)`, 'i'));
             if (match) {
                 todoLine = match[0];
                 todo = new Todo(todoLine);
@@ -51,38 +57,75 @@ function findAllTodos(files) {
     return todos;
 }
 
+function cutLen(string, limit) {
+    if (string.length > limit) {
+        return string.slice(0, limit - 3) + '...';
+    }
+    return string.padEnd(limit, ' ');
+}
+
+function printTodos(todos) {
+    const limitUsername = 10;
+    const limitDate = 10;
+    const limitComment = 50;
+
+    let maxUsernameLen = 0; 
+    let maxDateLen = 0;
+    let maxCommentLen = 0;
+    for (const todo of todos) {
+        maxUsernameLen = Math.max(maxUsernameLen, todo.username ? todo.username.length : 0);
+        maxDateLen = Math.max(maxDateLen, todo.date ? todo.date.length : 0);
+        maxCommentLen = Math.max(maxCommentLen, todo.comment ? todo.comment.length : 0);
+    }
+    const adjustedLimitUsername = Math.min(maxUsernameLen, limitUsername);
+    const adjustedLimitDate = Math.min(maxDateLen, limitDate);
+    const adjustedLimitComment = Math.min(maxCommentLen, limitComment);
+
+    console.log(`${'!'.padEnd(1, ' ')}  |  ${'user'.padEnd(adjustedLimitUsername, ' ')}  |  ${'date'.padEnd(adjustedLimitDate, ' ')}  |  ${'comment'.padEnd(adjustedLimitComment, ' ')}\n`);
+    console.log(`${'-'.padEnd(1, '-')}--|--${'-'.padEnd(adjustedLimitUsername, '-')}--|--${'-'.padEnd(adjustedLimitDate, '-')}--|--${'-'.padEnd(adjustedLimitComment, '-')}--\n`);
+    for (const todo of todos) {
+        const v1 = todo.isImportant ? '!' : ' ';
+        const v2 = todo.username ? cutLen(todo.username, adjustedLimitUsername) : ' '.padEnd(adjustedLimitUsername, ' ');
+        const v3 = todo.date ? cutLen(todo.date, adjustedLimitDate) : ' '.padEnd(adjustedLimitDate, ' ');
+        const v4 = todo.comment ? cutLen(todo.comment, adjustedLimitComment) : ' '.padEnd(adjustedLimitComment, ' ');
+        console.log(`${v1}  |  ${v2}  |  ${v3}  |  ${v4}\n`);
+    }
+    console.log(`${'-'.padEnd(1, '-')}--|--${'-'.padEnd(adjustedLimitUsername, '-')}--|--${'-'.padEnd(adjustedLimitDate, '-')}--|--${'-'.padEnd(adjustedLimitComment, '-')}--\n`);
+   
+
+}
+
 
 function processCommand(command) {
     command = command.trim();
     core = command.split(' ')[0];
     args = command.split(' ').slice(1);
-    let indexTodo = 0;
+
+    const result = [];
     switch (core) {
         case 'exit':
             process.exit(0);
             break;
         case 'show':
             for (const todo of findAllTodos(files)) {
-                console.log(`${++indexTodo}: ${todo.line}\n`);
+                result.push(todo);
             }
-            indexTodo = 0;
             break;
         case 'important':
             for (const todo of findAllTodos(files)) {
                 if (todo.isImportant) {
-                    console.log(`${++indexTodo}: ${todo.line}\n`);
+                    result.push(todo);
                 }
             }
-
+            
             break;
         case 'user':
             const username = args[0];
             for (const todo of findAllTodos(files)) {
                 if (todo.username && todo.username.toLowerCase() === username.toLowerCase()) {
-                    console.log(`${++indexTodo}: ${todo.line}\n`);
+                    result.push(todo);
                 }
             }
-            indexTodo = 0;
             break;
         case 'sort':
             const sortBy = args[0];
@@ -90,7 +133,7 @@ function processCommand(command) {
             if (sortBy === 'importance') {
                 todos.sort((a, b) => b.isImportant - a.isImportant);
             } else if (sortBy === 'user') {
-                todos.sort((a, b) => {
+                todos.sort((a, b) => {     
                     if (!a.username) return 1;
                     if (!b.username) return -1;
                     return a.username.localeCompare(b.username);
@@ -104,14 +147,27 @@ function processCommand(command) {
             }
 
             for (const todo of todos) {
-                console.log(`${++indexTodo}: ${todo.line}\n`);
+                result.push(todo);
             }
-            indexTodo = 0;
+            break;
+        case 'date':
+            const date = args[0];
+            for (const todo of findAllTodos(files)) {
+                if (todo.date && new Date(todo.date) >= new Date(date)) {
+                    result.push(todo);
+                }
+            }
+            break;
         default:
             console.log(command + "\n");
             console.log('wrong command');
             break;
+
     }
+    printTodos(result);
 }
 
 // TODO you can do it!
+//TOdO youjsdflsdflkjsdlf can do it!
+//TOdO: 1yosdflkjsdlf can do it!
+// TodO: 2youjsdfldlf can do it!
